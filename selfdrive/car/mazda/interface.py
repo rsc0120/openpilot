@@ -73,7 +73,7 @@ class CarInterface(CarInterfaceBase):
       ret.steerRatio = 14.0
     elif candidate == CAR.MAZDA6:
       ret.mass = 3443 * CV.LB_TO_KG
-      ret.wheelbase = 2.83
+      ret.wheelbase = 2.75
       ret.steerRatio = 15.5
     elif candidate in CAR.MAZDA3_2019:
       ret.mass = 3000 * CV.LB_TO_KG
