@@ -258,6 +258,8 @@ def manager_init() -> None:
     ("StandardJerk", "1.0"),
     ("StandbyMode", "0"),
     ("SteerRatio", "0"),
+    ("SteerRatioHigh", "0"),
+    ("SteerRatioLow", "0"),
     ("StockTune", "0"),
     ("StoppingDistance", "0"),
     ("TrafficMode", "0"),

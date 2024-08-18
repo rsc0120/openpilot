@@ -33,7 +33,9 @@ FrogPilotControlsPanel::FrogPilotControlsPanel(SettingsWindow *parent) : FrogPil
     {"LateralTune", "Lateral Tuning", "Modify openpilot's steering behavior.", "../frogpilot/assets/toggle_icons/icon_lateral_tune.png"},
     {"ForceAutoTune", "Force Auto Tune", "Forces comma's auto lateral tuning for unsupported vehicles.", ""},
     {"NNFF", "NNFF - Neural Network Feedforward", "Use Twilsonco's Neural Network Feedforward for enhanced precision in lateral control.", ""},
-    {"SteerRatio", steerRatioStock != 0 ? QString("Steer Ratio (Default: %1)").arg(steerRatioStock, 0, 'f', 2) : "Steer Ratio", "Set a custom steer ratio for your vehicle controls.", ""},
+    {"SteerRatio", steerRatioStock != 0 ? QString("Steer Ratio (Default: %1)").arg(steerRatioStock, 0, 'f', 2) : "Steer Ratio", "Set a custom interpolated steer ratio for your vehicle controls when driving between 10 and 25m/s", ""},
+    {"SteerRatioHigh", steerRatioStock != 0 ? QString("Steer Ratio (Default: %1)").arg(steerRatioStock, 0, 'f', 2) : "Steer Ratio High Speed", "Set a custom interpolated steer ratio for your vehicle controls when driving above 25m/s.", ""},
+    {"SteerRatioLow", steerRatioStock != 0 ? QString("Steer Ratio (Default: %1)").arg(steerRatioStock, 0, 'f', 2) : "Steer Ratio Low Speed", "Set a custom interpolated steer ratio for your vehicle controls when driving belwo 10m/s.", ""},
     {"UseLateralJerk", "Use Lateral Jerk", "Include steer torque necessary to achieve desired steer rate (lateral jerk).", ""},
 
     {"LongitudinalTune", "Longitudinal Tuning", "Modify openpilot's acceleration and braking behavior.", "../frogpilot/assets/toggle_icons/icon_longitudinal_tune.png"},
@@ -237,6 +239,10 @@ FrogPilotControlsPanel::FrogPilotControlsPanel(SettingsWindow *parent) : FrogPil
       });
       toggle = lateralTuneToggle;
     } else if (param == "SteerRatio") {
+      toggle = new FrogPilotParamValueControl(param, title, desc, icon, steerRatioStock * 0.75, steerRatioStock * 1.25, std::map<int, QString>(), this, false, "", 1, 0.01);
+    } else if (param == "SteerRatioHigh") {
+      toggle = new FrogPilotParamValueControl(param, title, desc, icon, steerRatioStock * 0.75, steerRatioStock * 1.25, std::map<int, QString>(), this, false, "", 1, 0.01);
+    } else if (param == "SteerRatioLow") {
       toggle = new FrogPilotParamValueControl(param, title, desc, icon, steerRatioStock * 0.75, steerRatioStock * 1.25, std::map<int, QString>(), this, false, "", 1, 0.01);
 
     } else if (param == "LongitudinalTune") {
@@ -562,6 +568,14 @@ void FrogPilotControlsPanel::updateCarToggles() {
         steerRatioToggle->setTitle(QString("Steer Ratio (Default: %1)").arg(steerRatioStock, 0, 'f', 2));
         steerRatioToggle->updateControl(steerRatioStock * 0.75, steerRatioStock * 1.25, "", 0.01);
         steerRatioToggle->refresh();
+        FrogPilotParamValueControl *steerRatioHighToggle = static_cast<FrogPilotParamValueControl*>(toggles["SteerRatioHigh"]);
+        steerRatioHighToggle->setTitle(QString("Steer Ratio High (Default: %1)").arg(steerRatioStock, 0, 'f', 2));
+        steerRatioHighToggle->updateControl(steerRatioStock * 0.75, steerRatioStock * 1.25, "", 0.01);
+        steerRatioHighToggle->refresh();
+        FrogPilotParamValueControl *steerRatioLowToggle = static_cast<FrogPilotParamValueControl*>(toggles["SteerRatioLow"]);
+        steerRatioLowToggle->setTitle(QString("Steer Ratio Low (Default: %1)").arg(steerRatioStock, 0, 'f', 2));
+        steerRatioLowToggle->updateControl(steerRatioStock * 0.75, steerRatioStock * 1.25, "", 0.01);
+        steerRatioLowToggle->refresh();
       }
     });
     timer->start();
@@ -570,6 +584,14 @@ void FrogPilotControlsPanel::updateCarToggles() {
     steerRatioToggle->setTitle(QString("Steer Ratio (Default: %1)").arg(steerRatioStock, 0, 'f', 2));
     steerRatioToggle->updateControl(steerRatioStock * 0.75, steerRatioStock * 1.25, "", 0.01);
     steerRatioToggle->refresh();
+    FrogPilotParamValueControl *steerRatioHighToggle = static_cast<FrogPilotParamValueControl*>(toggles["SteerRatioHigh"]);
+    steerRatioHighToggle->setTitle(QString("Steer Ratio High (Default: %1)").arg(steerRatioStock, 0, 'f', 2));
+    steerRatioHighToggle->updateControl(steerRatioStock * 0.75, steerRatioStock * 1.25, "", 0.01);
+    steerRatioHighToggle->refresh();
+    FrogPilotParamValueControl *steerRatioLowToggle = static_cast<FrogPilotParamValueControl*>(toggles["SteerRatioLow"]);
+    steerRatioLowToggle->setTitle(QString("Steer Ratio Low (Default: %1)").arg(steerRatioStock, 0, 'f', 2));
+    steerRatioLowToggle->updateControl(steerRatioStock * 0.75, steerRatioStock * 1.25, "", 0.01);
+    steerRatioLowToggle->refresh();
   }
 }
 

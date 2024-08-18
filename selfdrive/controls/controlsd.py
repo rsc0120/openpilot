@@ -15,7 +15,7 @@ from cereal.visionipc import VisionIpcClient, VisionStreamType
 from panda import ALTERNATIVE_EXPERIENCE
 
 from openpilot.common.conversions import Conversions as CV
-from openpilot.common.numpy_fast import clip
+from openpilot.common.numpy_fast import clip, interp
 from openpilot.common.params import Params
 from openpilot.common.realtime import config_realtime_process, Priority, Ratekeeper, DT_CTRL
 from openpilot.common.swaglog import cloudlog
@@ -877,7 +877,8 @@ class Controls:
     # Update VehicleModel
     lp = self.sm['liveParameters']
     x = max(lp.stiffnessFactor, 0.1)
-    sr = max(self.steer_ratio, 0.1) if self.use_custom_steer_ratio else max(lp.steerRatio, 0.1)
+    interp_sr = interp(self.CS_prev.vEgo, [1., 10., 25.], [self.steer_ratio_low, self.steer_ratio, self.steer_ratio_high])
+    sr = max(interp_sr, 0.1) if self.use_custom_steer_ratio else max(lp.steerRatio, 0.1)
     self.VM.update_params(x, sr)
 
     # Update Torque Params
@@ -1257,7 +1258,12 @@ class Controls:
     self.force_auto_tune = lateral_tune and self.params.get_float("ForceAutoTune")
     stock_steer_ratio = self.params.get_float("SteerRatioStock")
     self.steer_ratio = self.params.get_float("SteerRatio") if lateral_tune else stock_steer_ratio
+    self.steer_ratio_high = self.params.get_float("SteerRatioHigh") if lateral_tune else stock_steer_ratio
+    self.steer_ratio_low = self.params.get_float("SteerRatioLow") if lateral_tune else stock_steer_ratio
+    
     self.use_custom_steer_ratio = self.steer_ratio != stock_steer_ratio
+    self.use_custom_steer_ratio |= self.steer_ratio_high != stock_steer_ratio
+    self.use_custom_steer_ratio |= self.steer_ratio_low != stock_steer_ratio
 
     self.frogpilot_variables.lock_doors = self.params.get_bool("LockDoors")
     self.frogpilot_variables.long_pitch = self.params.get_bool("LongPitch")
