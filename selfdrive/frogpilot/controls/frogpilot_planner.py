@@ -13,7 +13,7 @@ from openpilot.selfdrive.frogpilot.controls.lib.conditional_experimental_mode im
 from openpilot.selfdrive.frogpilot.controls.lib.frogpilot_acceleration import FrogPilotAcceleration
 from openpilot.selfdrive.frogpilot.controls.lib.frogpilot_events import FrogPilotEvents
 from openpilot.selfdrive.frogpilot.controls.lib.frogpilot_following import FrogPilotFollowing
-from openpilot.selfdrive.frogpilot.controls.lib.frogpilot_functions import WeightedMovingAverageCalculator, calculate_lane_width, calculate_road_curvature, update_frogpilot_toggles
+from openpilot.selfdrive.frogpilot.controls.lib.frogpilot_functions import MovingAverageCalculator, calculate_lane_width, calculate_road_curvature, update_frogpilot_toggles
 from openpilot.selfdrive.frogpilot.controls.lib.frogpilot_variables import CITY_SPEED_LIMIT, CRUISING_SPEED, MODEL_LENGTH, PLANNER_TIME, THRESHOLD
 from openpilot.selfdrive.frogpilot.controls.lib.frogpilot_vcruise import FrogPilotVCruise
 
@@ -30,7 +30,8 @@ class FrogPilotPlanner:
     self.frogpilot_vcruise = FrogPilotVCruise(self)
     self.lead_one = Lead()
 
-    self.always_on_lateral_active = False
+    self.tracking_lead_mac = MovingAverageCalculator()
+
     self.lateral_check = False
     self.lead_departing = False
     self.model_stopped = False
@@ -42,8 +43,6 @@ class FrogPilotPlanner:
     self.road_curvature = 1
     self.tracking_lead_distance = 0
     self.v_cruise = 0
-
-    self.tracking_lead_mac = WeightedMovingAverageCalculator(window_size=4)
 
   def update(self, carState, controlsState, frogpilotCarControl, frogpilotCarState, frogpilotNavigation, modelData, radarState, frogpilot_toggles):
     if frogpilot_toggles.radarless_model:
@@ -69,15 +68,8 @@ class FrogPilotPlanner:
     if frogpilot_toggles.openpilot_longitudinal:
       self.frogpilot_acceleration.update(controlsState, frogpilotCarState, v_cruise, v_ego, frogpilot_toggles)
 
-    self.always_on_lateral_active |= frogpilot_toggles.always_on_lateral_main or carState.cruiseState.enabled
-    self.always_on_lateral_active &= frogpilot_toggles.always_on_lateral and carState.cruiseState.available
-    self.always_on_lateral_active &= driving_gear
-    self.always_on_lateral_active &= self.lateral_check
-    self.always_on_lateral_active &= not (frogpilot_toggles.always_on_lateral_lkas and frogpilotCarState.alwaysOnLateralDisabled)
-    self.always_on_lateral_active &= not (carState.brakePressed and v_ego < frogpilot_toggles.always_on_lateral_pause_speed) or carState.standstill
-
     run_cem = frogpilot_toggles.conditional_experimental_mode or frogpilot_toggles.force_stops or frogpilot_toggles.green_light_alert or frogpilot_toggles.show_stopping_point
-    if run_cem and (controlsState.enabled or self.always_on_lateral_active) and driving_gear:
+    if run_cem and (controlsState.enabled or frogpilotCarControl.alwaysOnLateralActive) and driving_gear:
       self.cem.update(carState, frogpilotNavigation, modelData, v_ego, v_lead, frogpilot_toggles)
     else:
       self.cem.stop_light_detected = False
@@ -119,7 +111,8 @@ class FrogPilotPlanner:
     else:
       self.taking_curve_quickly = False
 
-    self.tracking_lead = self.set_lead_status(lead_distance, stopping_distance, v_ego)
+    self.tracking_lead = self.set_lead_status(carState, lead_distance, stopping_distance, v_ego)
+
     if frogpilot_toggles.openpilot_longitudinal:
       self.v_cruise = self.frogpilot_vcruise.update(carState, controlsState, frogpilotCarControl, frogpilotCarState, frogpilotNavigation, modelData, v_cruise, v_ego, frogpilot_toggles)
     else:
@@ -129,12 +122,13 @@ class FrogPilotPlanner:
     if self.frogpilot_events.frame == 1:  # Force update to check the current state of "Always On Lateral" and holiday theme
       update_frogpilot_toggles()
 
-  def set_lead_status(self, lead_distance, stopping_distance, v_ego):
-    following_lead = self.lead_one.status and 1 < lead_distance < self.model_length + stopping_distance
+  def set_lead_status(self, carState, lead_distance, stopping_distance, v_ego):
+    following_lead = self.lead_one.status
+    following_lead &= 1 < lead_distance < self.model_length + stopping_distance or carState.standstill and self.tracking_lead
     following_lead &= v_ego > CRUISING_SPEED or self.tracking_lead
 
     self.tracking_lead_mac.add_data(following_lead)
-    return self.tracking_lead_mac.get_weighted_average() >= THRESHOLD
+    return self.tracking_lead_mac.get_moving_average() >= THRESHOLD
 
   def publish(self, sm, pm, frogpilot_toggles):
     frogpilot_plan_send = messaging.new_message('frogpilotPlan')
@@ -150,8 +144,6 @@ class FrogPilotPlanner:
 
     frogpilotPlan.adjustedCruise = float(min(self.frogpilot_vcruise.mtsc_target, self.frogpilot_vcruise.vtsc_target) * (CV.MS_TO_KPH if frogpilot_toggles.is_metric else CV.MS_TO_MPH))
     frogpilotPlan.vtscControllingCurve = bool(self.frogpilot_vcruise.mtsc_target > self.frogpilot_vcruise.vtsc_target)
-
-    frogpilotPlan.alwaysOnLateralActive = self.always_on_lateral_active
 
     frogpilotPlan.desiredFollowDistance = self.frogpilot_following.safe_obstacle_distance - self.frogpilot_following.stopped_equivalence_factor
     frogpilotPlan.safeObstacleDistance = self.frogpilot_following.safe_obstacle_distance
