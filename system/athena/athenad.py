@@ -532,6 +532,17 @@ def getNetworks():
 
 
 @dispatcher.add_method
+def getManagerURL():
+  ip_addr = HARDWARE.get_ipv4_address()
+  if ip_addr:
+    return {
+      'url': f"http://{ip_addr}:8082",
+    }
+  else:
+    raise Exception("Network Error")
+
+
+@dispatcher.add_method
 def takeSnapshot() -> str | dict[str, str] | None:
   from openpilot.system.camerad.snapshot.snapshot import jpeg_write, snapshot
   ret = snapshot()
