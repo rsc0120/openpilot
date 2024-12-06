@@ -241,4 +241,3 @@ def create_acc_cmd(self, packer, values, hold, resume):
 
   return packer.make_can_msg(msg_name, bus, values)
 
-
