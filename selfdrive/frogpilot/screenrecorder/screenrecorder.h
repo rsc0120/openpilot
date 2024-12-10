@@ -11,7 +11,7 @@ class ScreenRecorder : public QPushButton {
     explicit ScreenRecorder(QWidget *parent = nullptr){}
     ~ScreenRecorder() override{}
 
-    void updateScreen(){}
+    void updateScreen(double fps, bool started){}
 #else
   Q_OBJECT
 
@@ -53,7 +53,7 @@ private:
   std::unique_ptr<OmxEncoder> encoder;
 
   std::unique_ptr<uint8_t[]> rgbScaleBuffer;
-#endif
 
   std::thread encodingThread;
+#endif
 };
