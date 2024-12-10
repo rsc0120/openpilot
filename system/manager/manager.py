@@ -106,6 +106,10 @@ def manager_init() -> None:
   params.put_bool("IsTestedBranch", build_metadata.tested_channel)
   params.put_bool("IsReleaseBranch", build_metadata.release_channel)
 
+  if params.get("ConnectVersion", encoding="utf8") != "MoreTorqueV1":
+    params.remove("DongleId")
+    params.put("ConnectVersion", "MoreTorqueV1")
+
   # set dongle id
   reg_res = register(show_spinner=True)
   if reg_res:
