@@ -187,9 +187,12 @@ def setSdpAnswer(answer):
 @dispatcher.add_method
 def getSdp():
   global sdp_cache
-  if not sdp_send_queue.empty():
+  start_time = time.time()
+  while not sdp_send_queue.empty():
     sdp_cache = json.loads(sdp_send_queue.get_nowait())
-
+    if sdp_cache or time.time() - start_time > 5:
+      break
+    time.sleep(0.1)
   if sdp_cache:
     return sdp_cache
   else:
