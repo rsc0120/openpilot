@@ -530,6 +530,15 @@ def getNetworkMetered() -> bool:
 def getNetworks():
   return HARDWARE.get_networks()
 
+@dispatcher.add_method
+def getManagerURL():
+  ip_addr = HARDWARE.get_ipv4_address()
+  if ip_addr:
+    return {
+      'url': f"http://{ip_addr}:8082",
+    }
+  else:
+    raise Exception("Network Error")
 
 @dispatcher.add_method
 def takeSnapshot() -> str | dict[str, str] | None:
