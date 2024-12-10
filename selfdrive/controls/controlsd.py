@@ -15,7 +15,7 @@ from openpilot.common.conversions import Conversions as CV
 from openpilot.common.git import get_short_branch
 from openpilot.common.numpy_fast import clip
 from openpilot.common.params import Params
-from openpilot.common.realtime import config_realtime_process, Priority, Ratekeeper, DT_CTRL
+from openpilot.common.realtime import config_realtime_process, Priority, Ratekeeper, DT_CTRL, DT_MDL
 from openpilot.common.swaglog import cloudlog
 
 from openpilot.selfdrive.car.car_helpers import get_car_interface, get_startup_event
@@ -579,7 +579,7 @@ class Controls:
       torque_params = self.sm['liveTorqueParameters']
       friction = self.frogpilot_toggles.steer_friction if self.frogpilot_toggles.use_custom_steer_friction else torque_params.frictionCoefficientFiltered
       lat_accel_factor = self.frogpilot_toggles.steer_lat_accel_factor if self.frogpilot_toggles.use_custom_lat_accel_factor else torque_params.latAccelFactorFiltered
-      if self.sm.all_checks(['liveTorqueParameters']) and (torque_params.useParams or self.frogpilot_toggles.force_auto_tune) and not self.frogpilot_toggles.force_auto_tune_off:
+      if self.sm.all_checks(['liveTorqueParameters']) and (torque_params.useParams or self.frogpilot_toggles.force_auto_tune):
         self.LaC.update_live_torque_params(lat_accel_factor, torque_params.latAccelOffsetFiltered,
                                            friction)
 
@@ -626,7 +626,11 @@ class Controls:
         t_since_plan = (self.sm.frame - self.sm.recv_frame['longitudinalPlan']) * DT_CTRL
         actuators.accel = self.LoC.update_old_long(CC.longActive, CS, long_plan, pid_accel_limits, t_since_plan)
       else:
-        actuators.accel = self.LoC.update(CC.longActive, CS, long_plan.aTarget, long_plan.shouldStop or self.sm['frogpilotPlan'].forcingStopLength < 1, pid_accel_limits)
+        try:
+          pitch = self.sm['liveLocationKalman'].calibratedOrientationNED.value[1]
+        except:
+          pitch = 0.0
+        actuators.accel = self.LoC.update(CC.longActive, CS, long_plan.aTarget, pitch, long_plan.shouldStop, pid_accel_limits)
 
       if len(long_plan.speeds):
         actuators.speed = long_plan.speeds[-1]
@@ -744,7 +748,7 @@ class Controls:
           self.experimental_mode = not self.experimental_mode
           self.params.put_bool_nonblocking("ExperimentalMode", self.experimental_mode)
 
-    if self.sm.frame % 10 == 0 or self.resume_pressed:
+    if self.sm.frame * DT_CTRL % DT_MDL == 0 or self.resume_pressed:
       self.resume_previously_pressed = self.resume_pressed
 
     FPCC = custom.FrogPilotCarControl.new_message()
