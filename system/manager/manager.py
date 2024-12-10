@@ -64,6 +64,7 @@ def manager_init() -> None:
     ("NavSettingTime24h", "0"),
     ("OpenpilotEnabledToggle", "1"),
     ("RecordFront", "0"),
+    ("RecordRoad", "1"),
     ("SshEnabled", "0"),
     ("TetheringEnabled", "0"),
     ("LongitudinalPersonality", str(log.LongitudinalPersonality.standard)),
