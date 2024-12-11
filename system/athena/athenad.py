@@ -186,19 +186,15 @@ def setSdpAnswer(answer):
 
 @dispatcher.add_method
 def getSdp():
-  global sdp_cache
   start_time = time.time()
-  while not sdp_send_queue.empty():
-    sdp_cache = json.loads(sdp_send_queue.get_nowait())
-    if sdp_cache or time.time() - start_time > 5:
-      break
-    time.sleep(0.1)
-  if sdp_cache:
-    return sdp_cache
-  else:
-    return {
-      'error': True
-    }
+  timeout = 10
+  while time.time() - start_time < timeout:
+    try:
+      sdp = json.loads(sdp_send_queue.get(timeout=0.1))
+      if sdp:
+        return sdp
+    except queue.Empty:
+      pass
 
 @dispatcher.add_method
 def getIce():
