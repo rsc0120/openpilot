@@ -560,6 +560,7 @@ std::unordered_map<std::string, uint32_t> keys = {
     {"ExperimentalLongTune", PERSISTENT},
     {"LongOutputGain", PERSISTENT},
     {"BlendedACC", PERSISTENT},
+    {"EnableStreamer", PERSISTENT},
 };
 
 } // namespace

@@ -102,6 +102,12 @@ TogglesPanel::TogglesPanel(SettingsWindow *parent) : ListWidget(parent) {
       "../assets/offroad/icon_monitoring.png",
     },
     {
+      "EnableStreamer",
+      tr("Stream live video to your phone"),
+      tr("Use the connect website to stram your devices cameras to your phone in realtime."),
+      "../assets/offroad/icon_monitoring.png",
+    },
+    {
       "IsMetric",
       tr("Use Metric System"),
       tr("Display speed in km/h instead of mph."),
