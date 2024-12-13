@@ -12,6 +12,8 @@ class CarState(CarStateBase):
 
     can_define = CANDefine(DBC[CP.carFingerprint]["pt"])
     self.shifter_values = can_define.dv["GEAR"]["GEAR"]
+    if CP.flags & MazdaFlags.MANUAL_TRANSMISSION:
+      self.shifter_values = can_define.dv["MANUAL_GEAR"]["GEAR"]
 
     self.crz_btns_counter = 0
     self.acc_active_last = False
@@ -302,6 +304,11 @@ class CarState(CarStateBase):
         ("STEER", 100),
         ("SPEED", 50),
       ]
+
+      if CP.flags & MazdaFlags.MANUAL_TRANSMISSION:
+        messages += [
+          ("MANUAL_GEAR", 50)
+        ]
 
     return CANParser(DBC[CP.carFingerprint]["pt"], messages, 2)
 
