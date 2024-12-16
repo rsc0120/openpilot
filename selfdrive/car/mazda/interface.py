@@ -45,8 +45,6 @@ class CarInterface(CarInterfaceBase):
       if p.get_bool("NoFSC"):  # No Front Sensing Camera
         ret.flags |= MazdaFlags.NO_FSC.value
         ret.safetyConfigs[0].safetyParam |= Panda.FLAG_MAZDA_NO_FSC
-      if p.get_bool("ManualTransmission"):
-        ret.flags |= MazdaFlags.MANUAL_TRANSMISSION.value
 
       ret.steerActuatorDelay = 0.1
 
@@ -61,6 +59,8 @@ class CarInterface(CarInterfaceBase):
       ret.longitudinalTuning.kiV = [0.1, 0.1]
       ret.startingState = True
       ret.steerActuatorDelay = 0.3
+      if p.get_bool("ManualTransmission"):
+        ret.flags |= MazdaFlags.MANUAL_TRANSMISSION.value
 
     ret.steerLimitTimer = 0.8
 
