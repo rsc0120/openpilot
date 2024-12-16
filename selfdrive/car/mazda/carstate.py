@@ -178,8 +178,8 @@ class CarState(CarStateBase):
                                                                       cp.vl["BLINK_INFO"]["RIGHT_BLINK"] == 1)
 
     ret.engineRpm = cp_cam.vl["ENGINE_DATA"]["RPM"]
-    self.shifting = cp_cam.vl["GEAR"]["SHIFT"]
-    self.torque_converter_lock = cp_cam.vl["GEAR"]["TORQUE_CONVERTER_LOCK"]
+    #self.shifting = cp_cam.vl["GEAR"]["SHIFT"]
+    #self.torque_converter_lock = cp_cam.vl["GEAR"]["TORQUE_CONVERTER_LOCK"]
 
     ret.steeringAngleDeg = cp_cam.vl["STEER"]["STEER_ANGLE"]
 
@@ -299,7 +299,6 @@ class CarState(CarStateBase):
       messages += [
         ("ENGINE_DATA", 100),
         ("STEER_TORQUE", 100),
-        ("GEAR", 40),
         ("WHEEL_SPEEDS", 100),
         ("STEER", 100),
         ("SPEED", 50),
@@ -307,7 +306,11 @@ class CarState(CarStateBase):
 
       if CP.flags & MazdaFlags.MANUAL_TRANSMISSION:
         messages += [
-          ("MANUAL_GEAR", 50)
+          ("MANUAL_GEAR", 50),
+        ]
+      else:
+        messages += [
+          ("GEAR", 40),
         ]
 
     return CANParser(DBC[CP.carFingerprint]["pt"], messages, 2)
