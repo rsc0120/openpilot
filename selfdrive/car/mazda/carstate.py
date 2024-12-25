@@ -184,12 +184,15 @@ class CarState(CarStateBase):
     ret.steeringAngleDeg = cp_cam.vl["STEER"]["STEER_ANGLE"]
 
     ret.steeringTorque = cp_body.vl["EPS_FEEDBACK"]["STEER_TORQUE_SENSOR"]
-    can_gear = int(cp_cam.vl["GEAR"]["GEAR"])
     ret.gas = cp_cam.vl["ENGINE_DATA"]["PEDAL_GAS"]
 
     unit_conversion = CV.MPH_TO_MS if cp.vl["SYSTEM_SETTINGS"]["IMPERIAL_UNIT"] else CV.KPH_TO_MS
 
     ret.steeringPressed = abs(ret.steeringTorque) > self.params.STEER_DRIVER_ALLOWANCE
+    if self.CP.flags & MazdaFlags.MANUAL_TRANSMISSION:
+      can_gear = int(cp_cam.vl["MANUAL_GEAR"]["GEAR"])
+    else:
+      can_gear = int(cp_cam.vl["GEAR"]["GEAR"])
     ret.gearShifter = self.parse_gear_shifter(self.shifter_values.get(can_gear, None))
     ret.gasPressed = ret.gas > 0
     ret.seatbeltUnlatched = False # Cruise will not engage if seatbelt is unlatched (handled by car)
