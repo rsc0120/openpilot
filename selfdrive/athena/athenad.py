@@ -40,7 +40,7 @@ from openpilot.system.version import get_commit, get_normalized_origin, get_shor
 from openpilot.system.hardware.hw import Paths
 
 
-ATHENA_HOST = os.getenv('ATHENA_HOST', 'wss://athena.comma.ai')
+ATHENA_HOST = os.getenv('ATHENA_HOST', 'wss://athena.konik.ai')
 HANDLER_THREADS = int(os.getenv('HANDLER_THREADS', "4"))
 LOCAL_PORT_WHITELIST = {8022}
 
