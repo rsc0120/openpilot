@@ -3613,7 +3613,7 @@ Default matches half of the MUTCD standard of 4 inches.</source>
         <translation>Füge connect.comma.ai als Lesezeichen auf deinem Homescreen hinzu um es wie eine App zu verwenden</translation>
     </message>
     <message>
-        <source>Go to https://portal.springerelectronics.com on your phone</source>
+        <source>Go to https://stable.konik.ai on your phone</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

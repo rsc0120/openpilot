@@ -43,7 +43,7 @@ from openpilot.system.hardware.hw import Paths
 from openpilot.system.athena.webrtc import Streamer
 
 
-ATHENA_HOST = os.getenv('ATHENA_HOST', 'wss://athena.springerelectronics.com')
+ATHENA_HOST = os.getenv('ATHENA_HOST', 'wss://athena.konik.ai')
 HANDLER_THREADS = int(os.getenv('HANDLER_THREADS', "4"))
 LOCAL_PORT_WHITELIST = {8022}
 

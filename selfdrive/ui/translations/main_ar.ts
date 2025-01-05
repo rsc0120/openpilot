@@ -3629,7 +3629,7 @@ Default matches half of the MUTCD standard of 4 inches.</source>
         <translation>اجعل لـconnect.comma.ai إشارة مرجعية على شاشتك  الرئيسية من أجل استخدامه مثل أي تطبيق</translation>
     </message>
     <message>
-        <source>Go to https://portal.springerelectronics.com on your phone</source>
+        <source>Go to https://stable.konik.ai on your phone</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

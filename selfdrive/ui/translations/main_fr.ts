@@ -3625,7 +3625,7 @@ Default matches half of the MUTCD standard of 4 inches.</source>
         <translation>Ajoutez connect.comma.ai à votre écran d&apos;accueil pour l&apos;utiliser comme une application</translation>
     </message>
     <message>
-        <source>Go to https://portal.springerelectronics.com on your phone</source>
+        <source>Go to https://stable.konik.ai on your phone</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
