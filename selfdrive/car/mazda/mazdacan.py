@@ -46,19 +46,20 @@ def create_steering_control(packer, CP, frame, apply_steer, lkas):
     csum = csum % 256
     values = {}
     if CP.flags & MazdaFlags.GEN1:
-      values = {
-        "LKAS_REQUEST": apply_steer,
-        "CTR": ctr,
-        "ERR_BIT_1": er1,
-        "LINE_NOT_VISIBLE" : lnv,
-        "LDW": ldw,
-        "BIT_1": b1,
-        "ERR_BIT_2": er2,
-        "STEERING_ANGLE": steering_angle,
-        "ANGLE_ENABLED": b2,
-        "CHKSUM": csum
-      }
-      msgs.append(packer.make_can_msg("CAM_LKAS", 0, values))
+      if not CP.flags & MazdaFlags.NO_FSC:
+        values = {
+          "LKAS_REQUEST": apply_steer,
+          "CTR": ctr,
+          "ERR_BIT_1": er1,
+          "LINE_NOT_VISIBLE" : lnv,
+          "LDW": ldw,
+          "BIT_1": b1,
+          "ERR_BIT_2": er2,
+          "STEERING_ANGLE": steering_angle,
+          "ANGLE_ENABLED": b2,
+          "CHKSUM": csum
+        }
+        msgs.append(packer.make_can_msg("CAM_LKAS", 0, values))
 
       if CP.flags & MazdaFlags.TORQUE_INTERCEPTOR:
         values = {
