@@ -125,7 +125,7 @@ class Soundd:
         except FileNotFoundError:
           if filename == "prompt_repeat.wav":
             filename = "prompt.wav"
-          if filename == "startup.wav":
+          elif filename == "startup.wav":
             filename = "engage.wav"
           wavefile = wave.open(BASEDIR + "/selfdrive/assets/sounds/" + filename, 'r')
 
