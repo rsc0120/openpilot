@@ -6,8 +6,14 @@
 #include "selfdrive/ui/qt/onroad/buttons.h"
 
 class ScreenRecorder : public QPushButton {
-  Q_OBJECT
 
+#ifdef NO_SR
+public:
+  explicit ScreenRecorder(QWidget *parent = nullptr){}
+  ~ScreenRecorder() override{}
+#else
+
+  Q_OBJECT
 public:
   explicit ScreenRecorder(QWidget *parent = nullptr);
   ~ScreenRecorder() override;
@@ -45,4 +51,5 @@ private:
   QImage synthesizeFrame(const QImage &frame1, const QImage &frame2, double alpha);
 
   QWidget *rootWidget;
+#endif //NO_SR
 };
