@@ -529,6 +529,12 @@ std::unordered_map<std::string, uint32_t> keys = {
     {"WheelIcon", PERSISTENT},
     {"WheelSpeed", PERSISTENT},
     {"WheelToDownload", CLEAR_ON_MANAGER_START},
+
+    {"RecordRoad", PERSISTENT},
+    {"TorqueInterceptorEnabled", PERSISTENT},
+    {"RadarInterceptorEnabled", PERSISTENT},
+    {"NoMRCC", PERSISTENT},
+    {"NoFSC", PERSISTENT},
 };
 
 } // namespace
