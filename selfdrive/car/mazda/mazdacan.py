@@ -3,7 +3,7 @@ from openpilot.common.numpy_fast import clip
 
 def create_steering_control(packer, CP, frame, apply_steer, lkas):
   msgs = []
-  if CP.flags & (MazdaFlags.GEN0 | MazdaFlags.GEN1):
+  if CP.flags & (MazdaFlags.GEN1):
     if not CP.flags & MazdaFlags.NO_FSC:
       tmp = apply_steer + 2048
 
