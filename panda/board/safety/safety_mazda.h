@@ -37,17 +37,17 @@
 #define MAZDA_CAM  2
 
 // param flag masks
-const int FLAG_GEN0 = 1
-const int FLAG_GEN1 = 2
-const int FLAG_GEN2 = 4
-const int FLAG_GEN3 = 8
-const int FLAG_TORQUE_INTERCEPTOR = 16
-const int FLAG_RADAR_INTERCEPTOR = 32
-const int FLAG_NO_FSC = 64
-const int FLAG_NO_MRCC = 128
-const int FLAG_MANUAL_TRANSMISSION = 256
+const int FLAG_GEN0 = 1;
+const int FLAG_GEN1 = 2;
+const int FLAG_GEN2 = 4;
+const int FLAG_GEN3 = 8;
+const int FLAG_TORQUE_INTERCEPTOR = 16;
+const int FLAG_RADAR_INTERCEPTOR = 32;
+const int FLAG_NO_FSC = 64;
+const int FLAG_NO_MRCC = 128;
+const int FLAG_MANUAL_TRANSMISSION = 256;
 
-bool gen0 = false
+bool gen0 = false;
 bool gen1 = false;
 bool gen2 = false;
 bool torque_interceptor = false;
