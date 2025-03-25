@@ -3,8 +3,16 @@ from openpilot.common.numpy_fast import clip
 
 def create_steering_control(packer, CP, frame, apply_steer, lkas):
   msgs = []
-  if CP.flags & (MazdaFlags.GEN1):
-    if not CP.flags & MazdaFlags.NO_FSC:
+  if CP.flags & (MazdaFlags.GEN0 | MazdaFlags.GEN1):
+    if CP.flags & MazdaFlags.TORQUE_INTERCEPTOR:
+      values = {
+          "LKAS_REQUEST"     : apply_steer,
+          "CHKSUM"           : apply_steer,
+          "KEY"              : 3294744160
+      }
+      msgs.append(packer.make_can_msg("CAM_LKAS2", 1, values))
+      
+    if not CP.flags & MazdaFlags.NO_FSC and CP.flags & MazdaFlags.GEN1:
       tmp = apply_steer + 2048
 
       lo = tmp & 0xFF
@@ -58,14 +66,6 @@ def create_steering_control(packer, CP, frame, apply_steer, lkas):
         "CHKSUM": csum
       }
       msgs.append(packer.make_can_msg("CAM_LKAS", 0, values))
-
-    if CP.flags & MazdaFlags.TORQUE_INTERCEPTOR:
-      values = {
-          "LKAS_REQUEST"     : apply_steer,
-          "CHKSUM"           : apply_steer,
-          "KEY"              : 3294744160
-      }
-      msgs.append(packer.make_can_msg("CAM_LKAS2", 1, values))
 
   elif CP.flags & MazdaFlags.GEN2:
     bus = 1
