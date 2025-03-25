@@ -2,7 +2,6 @@
 /********** GEN1 msgs **********/
 #define MAZDA_LKAS          0x243
 #define MAZDA_LKAS_HUD      0x440
-#define MAZDA_CRZ_CTRL      0x21c
 #define MAZDA_CRZ_BTNS      0x09d
 #define MAZDA_STEER_TORQUE  0x240
 #define MAZDA_ENGINE_DATA   0x202
@@ -50,6 +49,7 @@ const int FLAG_MANUAL_TRANSMISSION = 256;
 bool gen0 = false;
 bool gen1 = false;
 bool gen2 = false;
+bool gen3 = false;
 bool torque_interceptor = false;
 bool radar_interceptor = false;
 bool no_fsc = false;
