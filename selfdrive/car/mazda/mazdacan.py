@@ -3,7 +3,7 @@ from openpilot.common.numpy_fast import clip
 
 def create_steering_control(packer, CP, frame, apply_steer, lkas):
   msgs = []
-  if CP.flags & MazdaFlags.GEN1:
+  if CP.flags & (MazdaFlags.GEN0 | MazdaFlags.GEN1):
     if not CP.flags & MazdaFlags.NO_FSC:
       tmp = apply_steer + 2048
 
@@ -83,7 +83,7 @@ def create_ti_steering_control(packer, CP, apply_steer):
   key = 3294744160
   chksum = apply_steer
 
-  if CP.flags & MazdaFlags.GEN1:
+  if CP.flags & (MazdaFlags.GEN0 | MazdaFlags.GEN1):
     values = {
         "LKAS_REQUEST"     : apply_steer,
         "CHKSUM"           : chksum,
@@ -132,7 +132,7 @@ def create_button_cmd(packer, CP, counter, button):
   can = int(button == Buttons.CANCEL)
   res = int(button == Buttons.RESUME)
 
-  if CP.flags & MazdaFlags.GEN1:
+  if CP.flags & (MazdaFlags.GEN0 | MazdaFlags.GEN1):
     values = {
       "CAN_OFF": can,
       "CAN_OFF_INV": (can + 1) % 2,

@@ -36,8 +36,7 @@ class CarState(CarStateBase):
     self.shifting = False
     self.torque_converter_lock = True
 
-    self.update = self.update_gen1
-    if CP.flags & MazdaFlags.GEN1:
+    if self.CP.flags & (MazdaFlags.GEN0 | MazdaFlags.GEN1):
       self.update = self.update_gen1
     if CP.flags & MazdaFlags.GEN2:
       self.update = self.update_gen2
@@ -93,7 +92,8 @@ class CarState(CarStateBase):
     ret.steeringPressed = abs(ret.steeringTorque) > LKAS_LIMITS.STEER_THRESHOLD
 
     ret.steeringTorqueEps = cp.vl["STEER_TORQUE"]["STEER_TORQUE_MOTOR"]
-    ret.steeringRateDeg = cp.vl["STEER_RATE"]["STEER_ANGLE_RATE"]
+    if self.CP.flags & MazdaFlags.GEN1:
+      ret.steeringRateDeg = cp.vl["STEER_RATE"]["STEER_ANGLE_RATE"]
 
     # TODO: this should be from 0 - 1.
     ret.brakePressed = cp.vl["PEDALS"]["BRAKE_ON"] == 1
@@ -108,7 +108,8 @@ class CarState(CarStateBase):
     ret.gasPressed = ret.gas > 0
 
     # Either due to low speed or hands off
-    lkas_blocked = cp.vl["STEER_RATE"]["LKAS_BLOCK"] == 1
+    if self.CP.flags & MazdaFlags.GEN1:
+      lkas_blocked = cp.vl["STEER_RATE"]["LKAS_BLOCK"] == 1
 
     if self.CP.minSteerSpeed > 0:
       # LKAS is enabled at 52kph going up and disabled at 45kph going down
@@ -127,7 +128,6 @@ class CarState(CarStateBase):
     if self.CP.flags & MazdaFlags.RADAR_INTERCEPTOR:
       self.crz_info = copy.copy(cp_cam.vl["CRZ_INFO"])
       self.crz_cntr = copy.copy(cp_cam.vl["CRZ_CTRL"])
-      self.cp_cam = cp_cam
       ret.cruiseState.enabled = cp.vl["PEDALS"]["ACC_ACTIVE"] == 1
       ret.cruiseState.available = cp.vl["PEDALS"]["CRZ_AVAILABLE"] == 1
     elif self.CP.flags & MazdaFlags.NO_MRCC:
@@ -149,9 +149,11 @@ class CarState(CarStateBase):
     # camera signals
     if not self.CP.flags & MazdaFlags.NO_FSC:
       self.lkas_disabled = cp_cam.vl["CAM_LANEINFO"]["LANE_LINES"] == 0 if not self.CP.flags & MazdaFlags.TORQUE_INTERCEPTOR else False
-      self.cam_lkas = cp_cam.vl["CAM_LKAS"]
       self.cam_laneinfo = cp_cam.vl["CAM_LANEINFO"]
-      ret.steerFaultPermanent = cp_cam.vl["CAM_LKAS"]["ERR_BIT_1"] == 1 if not self.CP.flags & MazdaFlags.TORQUE_INTERCEPTOR else False
+      if self.CP.flags & MazdaFlags.GEN1:
+        self.cam_lkas = cp_cam.vl["CAM_LKAS"]
+        ret.steerFaultPermanent = cp_cam.vl["CAM_LKAS"]["ERR_BIT_1"] == 1 if not self.CP.flags & MazdaFlags.TORQUE_INTERCEPTOR else False
+
     self.cp_cam = cp_cam
     self.cp = cp
 
@@ -222,7 +224,7 @@ class CarState(CarStateBase):
   @staticmethod
   def get_ti_messages(CP):
     messages = []
-    if CP.flags & (MazdaFlags.TORQUE_INTERCEPTOR | MazdaFlags.GEN1):
+    if (CP.flags & MazdaFlags.TORQUE_INTERCEPTOR) and (CP.flags & (MazdaFlags.GEN0 | MazdaFlags.GEN1)):
       messages += [
         ("TI_FEEDBACK", 50),
       ]
@@ -236,21 +238,13 @@ class CarState(CarStateBase):
 
   @staticmethod
   def get_can_parser(CP):
-    messages = [
-      ("CRZ_BTNS", 10),
-    ]
-    if not (CP.flags & MazdaFlags.GEN2):
-      messages += [
-        # sig_address, frequency
+    if CP.flags & MazdaFlags.GEN0:
+      messages = [
+        ("CRZ_BTNS", 10),
         ("BLINK_INFO", 10),
         ("STEER", 67),
-        ("STEER_RATE", 83),
         ("STEER_TORQUE", 83),
         ("WHEEL_SPEEDS", 100),
-      ]
-
-    if CP.flags & MazdaFlags.GEN1:
-      messages += [
         ("ENGINE_DATA", 100),
         ("CRZ_EVENTS", 50),
         ("PEDALS", 50),
@@ -266,8 +260,32 @@ class CarState(CarStateBase):
           ("CRZ_CTRL", 50),
         ]
 
-    if CP.flags & MazdaFlags.GEN2:
-      messages += [
+    elif CP.flags & MazdaFlags.GEN1:
+      messages = [
+        ("CRZ_BTNS", 10),
+        ("BLINK_INFO", 10),
+        ("STEER", 67),
+        ("STEER_RATE", 83),
+        ("STEER_TORQUE", 83),
+        ("WHEEL_SPEEDS", 100),
+        ("ENGINE_DATA", 100),
+        ("CRZ_EVENTS", 50),
+        ("PEDALS", 50),
+        ("BRAKE", 50),
+        ("SEATBELT", 10),
+        ("DOORS", 10),
+        ("GEAR", 20),
+        ("BSM", 10),
+      ]
+
+      if not (CP.flags & MazdaFlags.RADAR_INTERCEPTOR) and not (CP.flags & MazdaFlags.NO_MRCC):
+        messages += [
+          ("CRZ_CTRL", 50),
+        ]
+
+    elif CP.flags & MazdaFlags.GEN2:
+      messages = [
+        ("CRZ_BTNS", 10),
         ("BRAKE_PEDAL", 20),
         ("CRUZE_STATE", 10),
         ("BLINK_INFO", 10),
@@ -280,8 +298,25 @@ class CarState(CarStateBase):
   @staticmethod
   def get_cam_can_parser(CP):
     messages = []
+    if CP.flags & MazdaFlags.GEN0:
+      if not CP.flags & MazdaFlags.NO_FSC:
+        messages += [
+          #  address, frequency
+          ("CAM_LANEINFO", 2),
+        ]
 
-    if CP.flags & MazdaFlags.GEN1:
+      if CP.flags & MazdaFlags.RADAR_INTERCEPTOR:
+        messages += [
+          ("CRZ_INFO", 50),
+          ("CRZ_CTRL", 50),
+        ]
+        for addr in range(361,367):
+          msg = f"RADAR_{addr}"
+          messages += [
+            (msg,10),
+          ]
+
+    elif CP.flags & MazdaFlags.GEN1:
       if not CP.flags & MazdaFlags.NO_FSC:
         messages += [
           #  address, frequency
@@ -300,7 +335,7 @@ class CarState(CarStateBase):
             (msg,10),
           ]
 
-    if CP.flags & MazdaFlags.GEN2:
+    elif CP.flags & MazdaFlags.GEN2:
       messages += [
         ("ENGINE_DATA", 100),
         ("STEER_TORQUE", 100),

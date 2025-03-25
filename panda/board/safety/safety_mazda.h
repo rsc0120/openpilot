@@ -37,13 +37,17 @@
 #define MAZDA_CAM  2
 
 // param flag masks
-const int FLAG_GEN1 = 1;
-const int FLAG_GEN2 = 2;
-const int FLAG_TORQUE_INTERCEPTOR = 4;
-const int FLAG_RADAR_INTERCEPTOR = 8;
-const int FLAG_NO_FSC = 16;
-const int FLAG_NO_MRCC = 32;
+const int FLAG_GEN0 = 1
+const int FLAG_GEN1 = 2
+const int FLAG_GEN2 = 4
+const int FLAG_GEN3 = 8
+const int FLAG_TORQUE_INTERCEPTOR = 16
+const int FLAG_RADAR_INTERCEPTOR = 32
+const int FLAG_NO_FSC = 64
+const int FLAG_NO_MRCC = 128
+const int FLAG_MANUAL_TRANSMISSION = 256
 
+bool gen0 = false
 bool gen1 = false;
 bool gen2 = false;
 bool torque_interceptor = false;
@@ -114,7 +118,7 @@ RxCheck mazda_2019_rx_checks[] = {
 static void mazda_rx_hook(const CANPacket_t *to_push) {
   int addr = GET_ADDR(to_push);
   if ((int)GET_BUS(to_push) == MAZDA_MAIN) {
-    if (gen1){
+    if (gen0 || gen1){
       if (addr == MAZDA_ENGINE_DATA) {
         // sample speed: scale by 0.01 to get kph
         int speed = (GET_BYTE(to_push, 2) << 8) | GET_BYTE(to_push, 3);
@@ -166,7 +170,7 @@ static void mazda_rx_hook(const CANPacket_t *to_push) {
   }
 
   if ((GET_BUS(to_push) == MAZDA_AUX)) {
-    if (addr == TI_STEER_TORQUE && gen1 && torque_interceptor) {
+    if (addr == TI_STEER_TORQUE && (gen0 || gen1) && torque_interceptor) {
       int torque_driver_new = GET_BYTE(to_push, 0) - 127;
       update_sample(&torque_driver, torque_driver_new);
     }
@@ -197,7 +201,7 @@ static bool mazda_tx_hook(const CANPacket_t *to_send) {
   int bus = GET_BUS(to_send);
   int addr = GET_ADDR(to_send);
   // Check if msg is sent on the main BUS
-  if (gen1 && (bus == MAZDA_MAIN)) {
+  if ((gen0 || gen1) && (bus == MAZDA_MAIN)) {
 
     // steer cmd checks
     if (addr == MAZDA_LKAS) {
@@ -237,7 +241,7 @@ static int mazda_fwd_hook(int bus, int addr) {
       bus_fwd = MAZDA_CAM;
     }
   } else if (bus == MAZDA_CAM) {
-    if (gen1) {
+    if (gen0 || gen1) {
       block |= (addr == MAZDA_LKAS) || (addr == MAZDA_LKAS_HUD);
       if (radar_interceptor) {
         block |= (addr == MAZDA_CRZ_INFO) || (addr == MAZDA_CRZ_CTRL);
@@ -258,13 +262,16 @@ static int mazda_fwd_hook(int bus, int addr) {
 
 static safety_config mazda_init(uint16_t param) {
   safety_config ret = BUILD_SAFETY_CFG(mazda_rx_checks, MAZDA_TX_MSGS);
+  gen0 = GET_FLAG(param, FLAG_GEN0);
   gen1 = GET_FLAG(param, FLAG_GEN1);
   gen2 = GET_FLAG(param, FLAG_GEN2);
+  gen3 = GET_FLAG(param, FLAG_GEN3);
   radar_interceptor = GET_FLAG(param, FLAG_RADAR_INTERCEPTOR);
   torque_interceptor = GET_FLAG(param, FLAG_TORQUE_INTERCEPTOR);
   no_fsc = GET_FLAG(param, FLAG_NO_FSC);
   no_mrcc = GET_FLAG(param, FLAG_NO_MRCC);
-  if (gen1) {
+
+  if (gen0 || gen1) {
     SET_RX_CHECKS(mazda_rx_checks, ret);
     if (radar_interceptor && torque_interceptor) {
       SET_RX_CHECKS(mazda_ti_rx_checks, ret);

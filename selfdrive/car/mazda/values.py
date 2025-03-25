@@ -15,7 +15,7 @@ Ecu = car.CarParams.Ecu
 class CarControllerParams:
   def __init__(self, CP):
     self.STEER_STEP = 1 # 100 Hz
-    if CP.flags & MazdaFlags.GEN1:
+    if CP.flags & (MazdaFlags.GEN0 | MazdaFlags.GEN1):
       self.STEER_MAX = 600                # theoretical max_steer 2047
       self.STEER_DELTA_UP = 10             # torque increase per refresh
       self.STEER_DELTA_DOWN = 25           # torque decrease per refresh
@@ -60,13 +60,15 @@ class MazdaCarSpecs(CarSpecs):
 class MazdaFlags(IntFlag):
   # Static flags
   # Gen 1 hardware: same CAN messages and same camera
-  GEN1 = 1
-  GEN2 = 2
-  TORQUE_INTERCEPTOR = 4
-  RADAR_INTERCEPTOR = 8
-  NO_FSC = 16
-  NO_MRCC = 32
-  MANUAL_TRANSMISSION = 64
+  GEN0 = 1
+  GEN1 = 2
+  GEN2 = 4
+  GEN3 = 8
+  TORQUE_INTERCEPTOR = 16
+  RADAR_INTERCEPTOR = 32
+  NO_FSC = 64
+  NO_MRCC = 128
+  MANUAL_TRANSMISSION = 256
 
 @dataclass
 class MazdaPlatformConfig(PlatformConfig):
@@ -74,10 +76,8 @@ class MazdaPlatformConfig(PlatformConfig):
   def init(self):
     if self.flags & MazdaFlags.GEN2:
       self.dbc_dict = dbc_dict('mazda_2019', None)
-    elif self.flags & MazdaFlags.GEN1 and self.flags & MazdaFlags.RADAR_INTERCEPTOR:
+    elif self.flags & (MazdaFlags.GEN0 | MazdaFlags.GEN1) and self.flags & MazdaFlags.RADAR_INTERCEPTOR:
       self.dbc_dict = dbc_dict('mazda_2017', 'mazda_radar')
-
-
 
 class CAR(Platforms):
   MAZDA_CX5 = MazdaPlatformConfig(
@@ -89,6 +89,11 @@ class CAR(Platforms):
     [MazdaCarDocs("Mazda CX-9 2016-20")],
     MazdaCarSpecs(mass=4217 * CV.LB_TO_KG, wheelbase=3.1, steerRatio=17.6),
     flags=MazdaFlags.GEN1,
+  )
+  MAZDA_3_2014 = MazdaPlatformConfig(
+    [MazdaCarDocs("Mazda 3 2014")],
+    MazdaCarSpecs(mass=2875 * CV.LB_TO_KG, wheelbase=2.7, steerRatio=14.0),
+    flags=MazdaFlags.GEN0,
   )
   MAZDA_3 = MazdaPlatformConfig(
     [MazdaCarDocs("Mazda 3 2017-18")],
@@ -167,5 +172,6 @@ FW_QUERY_CONFIG = FwQueryConfig(
 )
 
 DBC = CAR.create_dbc_map()
+GEN0 = CAR.with_flags(MazdaFlags.GEN0)
 GEN1 = CAR.with_flags(MazdaFlags.GEN1)
 GEN2 = CAR.with_flags(MazdaFlags.GEN2)

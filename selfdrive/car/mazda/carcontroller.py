@@ -50,7 +50,7 @@ class CarController(CarControllerBase):
     self.apply_steer_last = apply_steer
     self.ti_apply_steer_last = ti_apply_steer
 
-    if self.CP.flags & MazdaFlags.GEN1:
+    if self.CP.flags & (MazdaFlags.GEN0 | MazdaFlags.GEN1):
       if CC.cruiseControl.cancel:
         # If brake is pressed, let us wait >70ms before trying to disable crz to avoid
         # a race condition with the stock system, where the second cancel from openpilot
