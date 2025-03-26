@@ -97,7 +97,7 @@ class CAR(Platforms):
   )
   MAZDA_6 = MazdaPlatformConfig(
     [MazdaCarDocs("Mazda 6 2017-20")],
-    MazdaCarSpecs(mass=3443 * CV.LB_TO_KG, wheelbase=2.83, steerRatio=15.5),
+    MazdaCarSpecs(mass=3443 * CV.LB_TO_KG, wheelbase=2.75, steerRatio=15.5),
     flags=MazdaFlags.GEN1,
   )
   MAZDA_CX9_2021 = MazdaPlatformConfig(
@@ -128,9 +128,9 @@ class CAR(Platforms):
 
 
 class LKAS_LIMITS:
-  STEER_THRESHOLD = 15
-  DISABLE_SPEED = 45    # kph
-  ENABLE_SPEED = 52     # kph
+  STEER_THRESHOLD = 6
+  DISABLE_SPEED = 0    # kph
+  ENABLE_SPEED = 0     # kph
   TI_STEER_THRESHOLD = 6
   TI_DISABLE_SPEED = 0    # kph
   TI_ENABLE_SPEED = 0     # kph
