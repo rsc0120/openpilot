@@ -22,8 +22,11 @@ class CarInterface(CarInterfaceBase):
     ret.dashcamOnly = False
     ret.openpilotLongitudinalControl = True
     p = Params()
+    if candidate in GEN0:
+      ret.safetyConfigs[0].safetyParam |= Panda.FLAG_MAZDA_GEN0
     if candidate in GEN1:
       ret.safetyConfigs[0].safetyParam |= Panda.FLAG_MAZDA_GEN1
+    if candidate in GEN0 or candidate in GEN1:
       if p.get_bool("TorqueInterceptorEnabled"): # Torque Interceptor Installed
         print("Torque Interceptor Installed")
         ret.flags |= MazdaFlags.TORQUE_INTERCEPTOR.value
