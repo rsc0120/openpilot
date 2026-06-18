@@ -560,7 +560,12 @@ void Localizer::reset_kalman(double current_time) {
 }
 
 void Localizer::finite_check(double current_time) {
-  bool all_finite = this->kf->get_x().array().isFinite().all() or this->kf->get_P().array().isFinite().all();
+  // Drift-debug fix (A): upstream wrote `or` here, which meant the guard only
+  // tripped when BOTH x and P went non-finite. We saw P go to NaN
+  // (positionECEFStd=NaN in drift_debug snapshots) while x stayed finite —
+  // status then sticks at UNINITIALIZED forever because NaN < VALID_POS_STD
+  // and NaN > SANE_GPS_UNCERTAINTY are both false, so no recovery path fires.
+  bool all_finite = this->kf->get_x().array().isFinite().all() and this->kf->get_P().array().isFinite().all();
   if (!all_finite) {
     LOGE("Non-finite values detected, kalman reset");
     this->reset_kalman(current_time);
@@ -729,21 +734,21 @@ void Localizer::configure_gnss_source(const LocalizerGnssSource &source) {
 
 int Localizer::locationd_thread() {
   Params params;
-  LocalizerGnssSource source;
-  const char* gps_location_socket;
-  if (params.getBool("UbloxAvailable")) {
-    source = LocalizerGnssSource::UBLOX;
-    gps_location_socket = "gpsLocationExternal";
-  } else {
-    source = LocalizerGnssSource::QCOM;
-    gps_location_socket = "gpsLocation";
-  }
-
-  this->configure_gnss_source(source);
-  const std::initializer_list<const char *> service_list = {gps_location_socket, "cameraOdometry", "liveCalibration",
+  // Drift-debug fix (B): permanent no-GPS mode.
+  // Don't subscribe to any GPS source so handle_gps / handle_gnss never run.
+  // gps_mode stays at its default false (locationd.h initializer) and
+  // last_gps_msg stays 0, so is_gps_ok() always returns false → A's
+  // input_fake_gps_observations path in the main loop runs every tick and
+  // keeps pos_std bounded purely from inertial integration. The locationd
+  // pose stream (calibratedOrientationNED / velocityCalibrated /
+  // angularVelocityCalibrated) is unaffected — those use `this->calibrated`,
+  // not `gps_mode`. Conceptually equivalent to upstream PR #33029 in intent,
+  // without the C++→Python rewrite. Inspired by drift_debug snapshots where
+  // GPS dropouts pinned status at UNINITIALIZED.
+  const std::initializer_list<const char *> service_list = {"cameraOdometry", "liveCalibration",
                                                           "carState", "accelerometer", "gyroscope"};
 
-  SubMaster sm(service_list, {}, nullptr, {gps_location_socket});
+  SubMaster sm(service_list);
   PubMaster pm({"liveLocationKalman", "livePose"});
 
   uint64_t cnt = 0;
@@ -772,6 +777,14 @@ int Localizer::locationd_thread() {
       bool inputsOK = sm.allValid() && this->are_inputs_ok();
       bool gpsOK = this->is_gps_ok();
       bool sensorsOK = sm.allAliveAndValid({"accelerometer", "gyroscope"});
+
+      // Drift-debug fix (A): keep pos_std bounded while GPS is absent.
+      // Existing determine_gps_mode only inputs fake obs once pos_std > 1500m,
+      // leaving a 50–1500m "stuck zone" where pos_std drifts up freely and
+      // status pins at UNINITIALIZED. Run fake obs every tick without GPS.
+      if (filterInitialized && !gpsOK) {
+        this->input_fake_gps_observations(this->kf->get_filter_time());
+      }
 
       // Log time to first fix
       if (gpsOK && std::isnan(this->ttff) && !std::isnan(this->first_valid_log_time)) {
